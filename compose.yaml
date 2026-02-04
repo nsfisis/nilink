@@ -1,0 +1,11 @@
+services:
+  nilink:
+    build:
+      context: .
+    ports:
+      - '127.0.0.1:8080:8080'
+    volumes:
+      - ./data:/app/data
+    environment:
+      TZ: Asia/Tokyo
+    restart: always
