@@ -4,9 +4,11 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 func newMux(db *sql.DB) http.Handler {
@@ -37,7 +39,32 @@ func newMux(db *sql.DB) http.Handler {
 		}
 		http.Redirect(w, r, url, http.StatusMovedPermanently)
 	})
-	return mux
+	return withLogging(mux)
+}
+
+type responseWriter struct {
+	http.ResponseWriter
+	status int
+}
+
+func (w *responseWriter) WriteHeader(code int) {
+	w.status = code
+	w.ResponseWriter.WriteHeader(code)
+}
+
+func withLogging(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		rw := &responseWriter{ResponseWriter: w, status: http.StatusOK}
+		next.ServeHTTP(rw, r)
+		slog.Info("request",
+			"method", r.Method,
+			"path", r.URL.Path,
+			"status", rw.status,
+			"duration", time.Since(start),
+			"remote", r.RemoteAddr,
+		)
+	})
 }
 
 func cmdServe(args []string) {
@@ -53,7 +80,7 @@ func cmdServe(args []string) {
 	}
 	defer db.Close()
 
-	fmt.Fprintf(os.Stderr, "listening on %s\n", *addr)
+	slog.Info("listening", "addr", *addr)
 	if err := http.ListenAndServe(*addr, newMux(db)); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
