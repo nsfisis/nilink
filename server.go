@@ -43,7 +43,7 @@ func newMux(db *sql.DB) http.Handler {
 func cmdServe(args []string) {
 	fs := flag.NewFlagSet("serve", flag.ExitOnError)
 	addr := fs.String("addr", ":8080", "listen address")
-	dbPath := fs.String("db", "nilink.db", "database path")
+	dbPath := fs.String("db", "data/nilink.db", "database path")
 	fs.Parse(args)
 
 	db, err := openDB(*dbPath)

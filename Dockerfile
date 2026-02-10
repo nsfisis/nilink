@@ -19,4 +19,4 @@ COPY --from=builder /app/nilink /app
 
 EXPOSE 8080
 ENTRYPOINT ["/app/nilink"]
-CMD ["serve", "-addr", ":8080", "-db", "/data/nilink.db"]
+CMD ["serve", "-addr", ":8080"]
